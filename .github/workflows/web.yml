@@ -1,0 +1,43 @@
+name: web
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q nova-engine-m7-web.zip
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+      - name: Build web
+        working-directory: nova
+        run: |
+          emcmake cmake -B build-web -DCMAKE_BUILD_TYPE=Release -DNV_BUILD_TESTS=OFF
+          cmake --build build-web -j
+      - name: Collect site
+        run: |
+          mkdir site
+          cp nova/build-web/index.html nova/build-web/index.js nova/build-web/index.wasm nova/build-web/index.data site/
+          touch site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
