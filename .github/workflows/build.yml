@@ -1,0 +1,16 @@
+name: build-wasm
+on:
+  push: { paths: ["*.cpp", "*.h", gpu.js, shell.html, build.sh] }
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y clang lld
+      - run: sh build.sh
+      - run: |
+          git config user.name github-actions && git config user.email actions@github.com
+          git add index.html && (git diff --cached --quiet || git commit -m "build index.html") && git push
+          
