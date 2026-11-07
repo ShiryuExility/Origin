@@ -1,0 +1,23 @@
+name: build-wasm
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install clang
+        run: sudo apt-get update && sudo apt-get install -y clang lld
+      - name: build wasm
+        run: sh build.sh
+      - name: commit index.html
+        run: |
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git add index.html
+          git diff --cached --quiet || git commit -m "build index.html"
+          git push
+          
